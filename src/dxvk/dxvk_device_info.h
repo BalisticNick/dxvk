@@ -161,6 +161,7 @@ namespace dxvk {
     VkExtensionProperties extPageableDeviceLocalMemory      = vk::makeExtension(VK_EXT_PAGEABLE_DEVICE_LOCAL_MEMORY_EXTENSION_NAME);
     VkExtensionProperties extPresentTiming                  = vk::makeExtension(VK_EXT_PRESENT_TIMING_EXTENSION_NAME);
     VkExtensionProperties extPresentModeFifoLatestReady     = vk::makeExtension(VK_EXT_PRESENT_MODE_FIFO_LATEST_READY_EXTENSION_NAME);
+    VkExtensionProperties khrPresentModeFifoLatestReady     = vk::makeExtension(VK_KHR_PRESENT_MODE_FIFO_LATEST_READY_EXTENSION_NAME); 
     VkExtensionProperties extRobustness2                    = vk::makeExtension(VK_EXT_ROBUSTNESS_2_EXTENSION_NAME);
     VkExtensionProperties extSampleLocations                = vk::makeExtension(VK_EXT_SAMPLE_LOCATIONS_EXTENSION_NAME);
     VkExtensionProperties extShaderModuleIdentifier         = vk::makeExtension(VK_EXT_SHADER_MODULE_IDENTIFIER_EXTENSION_NAME);
