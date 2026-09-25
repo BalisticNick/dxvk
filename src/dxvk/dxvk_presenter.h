@@ -426,6 +426,8 @@ namespace dxvk {
 
     bool                        m_hasGamescopeFenceSignalBug = false;
 
+    bool                        m_warnedLatestReady = false; 
+
     static const std::array<std::pair<VkColorSpaceKHR, VkColorSpaceKHR>, 2> s_colorSpaceFallbacks;
 
     void updateSwapChain();

@@ -203,7 +203,8 @@ namespace dxvk {
 
     // Present timing isn't useful with Immediate or Mailbox
     bool isFifoMode = m_presentMode == VK_PRESENT_MODE_FIFO_KHR
-                   || m_presentMode == VK_PRESENT_MODE_FIFO_RELAXED_KHR;
+                   || m_presentMode == VK_PRESENT_MODE_FIFO_RELAXED_KHR
+		   || m_presentMode == VK_PRESENT_MODE_FIFO_LATEST_READY_KHR;;
 
     bool waitForPresent = m_hasPresentWait && isFifoMode;
 
@@ -699,12 +700,29 @@ namespace dxvk {
 
     m_presentMode = pickPresentMode(modes.size(), modes.data(), m_preferredSyncInterval);
 
+    if (m_device->config().tearFree == TearFreeMode::Fifo
+     && m_presentMode != VK_PRESENT_MODE_FIFO_LATEST_READY_KHR && !m_warnedLatestReady) {
+      m_warnedLatestReady = true;
+
+      bool hasFeature = m_device->features().extPresentModeFifoLatestReady.presentModeFifoLatestReady
+                     || m_device->features().khrPresentModeFifoLatestReady.presentModeFifoLatestReady;
+
+      Logger::warn(str::format("Presenter: FIFO_LATEST_READY requested but ",
+        hasFeature ? "not reported by the surface" : "device feature not enabled",
+        ", using ", m_presentMode));
+    }
+
     // Check whether we can change present modes dynamically. This may
     // influence the image count as well as further swap chain creation.
     std::vector<VkPresentModeKHR> dynamicModes = {{
       pickPresentMode(modes.size(), modes.data(), 0),
       pickPresentMode(modes.size(), modes.data(), 1),
     }};
+    
+    // FIFO_LATEST_READY can only run ahead of the display if there are
+    // spare images to keep queued, so ask for one more than usual.
+    if (m_presentMode == VK_PRESENT_MODE_FIFO_LATEST_READY_KHR)
+      minImageCount += 1u;
 
     std::vector<VkPresentModeKHR> compatibleModes;
 
@@ -1256,14 +1274,21 @@ namespace dxvk {
     std::array<VkPresentModeKHR, 2> desired = { };
     uint32_t numDesired = 0;
 
-    Tristate tearFree = m_device->config().tearFree;
+    TearFreeMode tearFree = m_device->config().tearFree;
+
+    bool hasLatestReady = m_device->features().extPresentModeFifoLatestReady.presentModeFifoLatestReady
+                       || m_device->features().khrPresentModeFifoLatestReady.presentModeFifoLatestReady;
 
     if (!syncInterval) {
-      if (tearFree != Tristate::True)
-        desired[numDesired++] = VK_PRESENT_MODE_IMMEDIATE_KHR;
-      desired[numDesired++] = VK_PRESENT_MODE_MAILBOX_KHR;
+      if (tearFree != TearFreeMode::True && tearFree != TearFreeMode::Fifo)
+        desired[numDesired++] = VK_PRESENT_MODE_IMMEDIATE_KHR; 
+      else { 
+	if (tearFree == TearFreeMode::Fifo && hasLatestReady)
+	desired[numDesired++] = VK_PRESENT_MODE_FIFO_LATEST_READY_KHR;
+      } 	     
+    desired[numDesired++] = VK_PRESENT_MODE_MAILBOX_KHR;  
     } else {
-      if (tearFree == Tristate::False)
+      if (tearFree == TearFreeMode::False)
         desired[numDesired++] = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
     }
 

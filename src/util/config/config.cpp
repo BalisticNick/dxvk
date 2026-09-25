@@ -1702,6 +1702,19 @@ namespace dxvk {
       s_lookup.begin(), s_lookup.end(), result);
   }
 
+  bool Config::parseOptionValue(
+    const std::string&  value,
+          TearFreeMode& result) {
+    static const std::array<std::pair<const char*, TearFreeMode>, 4> s_lookup = {{
+      { "true",  TearFreeMode::True  },
+      { "false", TearFreeMode::False },
+      { "auto",  TearFreeMode::Auto  },
+      { "fifo",  TearFreeMode::Fifo  },
+    }};
+
+    return parseStringOption(value,
+      s_lookup.begin(), s_lookup.end(), result);
+  }
 
   template<typename I, typename V>
   bool Config::parseStringOption(

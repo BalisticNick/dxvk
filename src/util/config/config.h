@@ -18,6 +18,13 @@ namespace dxvk {
     True  =  1,
   };
 
+ enum class TearFreeMode : int32_t {
+    Auto  = -1,
+    False =  0,
+    True  =  1,
+    Fifo  =  2,
+  };
+
   /**
    * \brief Config option set
    * 
@@ -131,6 +138,10 @@ namespace dxvk {
     static bool parseOptionValue(
       const std::string&  value,
             Tristate&     result);
+    
+    static bool parseOptionValue(
+      const std::string&  value,
+            TearFreeMode& result);
 
     template<typename I, typename V>
     static bool parseStringOption(

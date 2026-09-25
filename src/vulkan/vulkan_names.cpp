@@ -299,6 +299,7 @@ std::ostream& operator << (std::ostream& os, VkPresentModeKHR e) {
     ENUM_NAME(VK_PRESENT_MODE_MAILBOX_KHR);
     ENUM_NAME(VK_PRESENT_MODE_FIFO_KHR);
     ENUM_NAME(VK_PRESENT_MODE_FIFO_RELAXED_KHR);
+    ENUM_NAME(VK_PRESENT_MODE_FIFO_LATEST_READY_KHR);    
     ENUM_DEFAULT(e);
   }
   return os;

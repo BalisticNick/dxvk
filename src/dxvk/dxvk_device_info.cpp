@@ -36,6 +36,7 @@ namespace dxvk {
     HANDLE_EXT(extMultiDraw);                      \
     HANDLE_EXT(extNonSeamlessCubeMap);             \
     HANDLE_EXT(extPageableDeviceLocalMemory);      \
+    HANDLE_EXT(extPresentModeFifoLatestReady);     \
     HANDLE_EXT(extPresentTiming);                  \
     HANDLE_EXT(extRobustness2);                    \
     HANDLE_EXT(extSampleLocations);                \
@@ -62,6 +63,7 @@ namespace dxvk {
     HANDLE_EXT(khrPipelineLibrary);                \
     HANDLE_EXT(khrPresentId);                      \
     HANDLE_EXT(khrPresentId2);                     \
+    HANDLE_EXT(khrPresentModeFifoLatestReady);     \
     HANDLE_EXT(khrPresentWait);                    \
     HANDLE_EXT(khrPresentWait2);                   \
     HANDLE_EXT(khrShaderFloatControls2);           \
@@ -620,6 +622,11 @@ namespace dxvk {
     else if (m_featuresSupported.khrPresentId.presentId)
       m_featuresSupported.khrPresentId2.presentId2 = VK_FALSE;
 
+    // The KHR and EXT variants of the FIFO_LATEST_READY extension use the same
+    // structure type, so only enable one of them if a driver exposes both.
+    if (m_featuresSupported.khrPresentModeFifoLatestReady.presentModeFifoLatestReady)
+      m_featuresSupported.extPresentModeFifoLatestReady.presentModeFifoLatestReady = VK_FALSE;
+
     // Sanitize features with other feature dependencies
     if (!m_featuresSupported.khrCalibratedTimestamps
      || !m_featuresSupported.khrPresentId2.presentId2)
@@ -1004,6 +1011,10 @@ namespace dxvk {
 
       /* Enables more dynamic driver-side memory management */
       ENABLE_EXT_FEATURE(extPageableDeviceLocalMemory, pageableDeviceLocalMemory, false),
+	
+
+      /* FIFO_LATEST_READY present mode, selected through the tearFree option */
+      ENABLE_EXT_FEATURE(extPresentModeFifoLatestReady, presentModeFifoLatestReady, false),
 
       /* Present timing features, try to enable everything */
       ENABLE_EXT_FEATURE(extPresentTiming, presentTiming, false),
@@ -1071,6 +1082,9 @@ namespace dxvk {
 
       /* Dependency for graphics pipeline library */
       ENABLE_EXT(khrPipelineLibrary, false),
+
+      /* FIFO_LATEST_READY present mode, selected through the tearFree option */
+      ENABLE_EXT_FEATURE(khrPresentModeFifoLatestReady, presentModeFifoLatestReady, false),
 
       /* Present wait, used for frame pacing and statistics */
       ENABLE_EXT_FEATURE(khrPresentId, presentId, false),
