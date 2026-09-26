@@ -839,11 +839,6 @@ namespace dxvk {
     formatList.viewFormatCount      = viewFormats.size();
     formatList.pViewFormats         = viewFormats.data();
 
-    // FIFO_LATEST_READY can only run ahead of the display if there are
-    // spare images to keep queued, so ask for one more than usual.
-    if (m_presentMode == VK_PRESENT_MODE_FIFO_LATEST_READY_KHR)
-      minImageCount += 1u;
-
     VkSwapchainCreateInfoKHR swapInfo = { VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
     swapInfo.surface                = m_surface;
     swapInfo.minImageCount          = pickImageCount(minImageCount, maxImageCount);
