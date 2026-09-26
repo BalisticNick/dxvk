@@ -719,11 +719,6 @@ namespace dxvk {
       pickPresentMode(modes.size(), modes.data(), 1),
     }};
     
-    // FIFO_LATEST_READY can only run ahead of the display if there are
-    // spare images to keep queued, so ask for one more than usual.
-    if (m_presentMode == VK_PRESENT_MODE_FIFO_LATEST_READY_KHR)
-      minImageCount += 1u;
-
     std::vector<VkPresentModeKHR> compatibleModes;
 
     // As for the minimum image count, start with the most generic value
@@ -843,6 +838,11 @@ namespace dxvk {
     VkImageFormatListCreateInfo formatList = { VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO };
     formatList.viewFormatCount      = viewFormats.size();
     formatList.pViewFormats         = viewFormats.data();
+
+    // FIFO_LATEST_READY can only run ahead of the display if there are
+    // spare images to keep queued, so ask for one more than usual.
+    if (m_presentMode == VK_PRESENT_MODE_FIFO_LATEST_READY_KHR)
+      minImageCount += 1u;
 
     VkSwapchainCreateInfoKHR swapInfo = { VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
     swapInfo.surface                = m_surface;
