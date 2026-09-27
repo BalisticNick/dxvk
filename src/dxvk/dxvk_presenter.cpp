@@ -206,7 +206,7 @@ namespace dxvk {
                    || m_presentMode == VK_PRESENT_MODE_FIFO_RELAXED_KHR
 		   || m_presentMode == VK_PRESENT_MODE_FIFO_LATEST_READY_KHR;;
 
-    bool waitForPresent = m_hasPresentWait && isFifoMode;
+    bool waitForPresent = m_hasPresentWait && isFifoMode && m_presentMode != VK_PRESENT_MODE_FIFO_LATEST_READY_KHR;
 
     VkPresentTimingInfoEXT timingInfo = { VK_STRUCTURE_TYPE_PRESENT_TIMING_INFO_EXT };
     timingInfo.presentStageQueries = m_timingMode.presentStage;
@@ -1467,22 +1467,29 @@ namespace dxvk {
       ? uint64_t(1000000000.0 / std::abs(m_frameRateLimit))
       : uint64_t(0u);
 
-    // Don't enable timing if the frame rate limit exceeds maximum refresh
-    // by more than kPresentTimingFrameRateSlack frames per second. A limit
-    // that merely matches (or sits a little above) native refresh still
-    // benefits from present timing -- it's only once the app is genuinely
-    // trying to outrun the display that timing stops being useful. The
-    // slack also absorbs small deltas between the refresh rates reported
-    //
-    // by win32 and the Vulkan driver while running at native refresh.
-    constexpr double kPresentTimingFrameRateSlack = 5.0;
 
+    // Don't enable timing if we are trying to limit to less than half a
+    // frame per second below maximum refresh. This catches small deltas
+    // between the refresh rates reported by win32 and the Vulkan driver
+    // while running at native refresh.
     uint64_t thresholdIntervalNs = m_frameRateLimit != 0.0
-     ? uint64_t(1000000000.0 / std::max(std::abs(m_frameRateLimit)
-          - kPresentTimingFrameRateSlack, 1.0))
-    : uint64_t(0u);
+      ? uint64_t(1000000000.0 / (std::abs(m_frameRateLimit) + 0.5))
+      : uint64_t(0u);
 
-    if (!m_timingMode.presentStage || thresholdIntervalNs <= m_timingDisplayInfo->refreshIntervalNs) {
+    // FIFO_LATEST_READY can naturally run ahead of the display by up to
+    // (image count - 1) frames per refresh interval Below that rate 
+    // the mode already behaves like FIFO,
+    // so only bother enabling timing if the requested cap is below what
+    // the mode can already deliver on its own.
+    uint64_t floorIntervalNs = m_timingDisplayInfo->refreshIntervalNs;
+
+    if (m_presentMode == VK_PRESENT_MODE_FIFO_LATEST_READY_KHR
+     && m_images.size() > 1u && m_timingDisplayInfo->refreshIntervalNs) {
+      floorIntervalNs = m_timingDisplayInfo->refreshIntervalNs
+                      / (uint64_t(m_images.size()) - 1u);
+    }
+
+    if (!m_timingMode.presentStage || thresholdIntervalNs <= floorIntervalNs) {
       Logger::info("Presenter: Present timing disabled");
       return;
     }
